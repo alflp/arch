@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# ставим grub
-pacman -S grub efibootmgr --noconfirm
-grub-install
-grub-mkconfig -o /boot/grub/grub.cfg
-
-clear
-
-# объявляем переменные
-username=alex
-hostname=vbox
-
-# Прописываем имя компьютера
-echo $hostname > /etc/hostname
-
 # Временная зона
 ln -svf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 
@@ -35,6 +21,16 @@ echo 'FONT=cyr-sun16' >> /etc/vconsole.conf
 echo "127.0.1.1 $username" >> /etc/hosts
 echo "127.0.0.1 localhost" >> /etc/hosts
 
+#Пересоздать образ initramfs
+mkinitcpio -p linux
+
+# объявляем переменные
+username=alex
+hostname=acer
+
+# Прописываем имя компьютера
+echo $hostname > /etc/hostname
+
 # Добавляем пользователя
 useradd -m -G wheel -s /bin/bash $username # группа wheel — для работы с sudo
 echo '%wheel ALL=(ALL) ALL' >> /etc/sudoers # настраиваем sudo
@@ -47,11 +43,19 @@ passwd
 echo "Enter passwd $username"
 passwd $username
 
-pacman -S git bash-completion htop --noconfirm # ставим потихоньку ПО
+# ставим grub
+pacman -S grub efibootmgr --noconfirm
+grub-install
+grub-mkconfig -o /boot/grub/grub.cfg
 
-pacman -S xfce4-terminal
+clear
+
+#Скачать reflector
+pacman -S reflector
+reflector -p http -c 'RU' -n 5 --sort rate --save /etc/pacman.d/mirrorlist
+
 ###################################################################
 pacman -S virtualbox-guest-utils # только для виртуальной машины!!!
 ###################################################################
 
-systemctl enable NetworkManager
+systemctl enable dhcpcd.service
